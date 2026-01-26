@@ -1,0 +1,25 @@
+FROM node:22-alpine
+
+ENV PNPM_HOME="/pnpm"
+
+ENV PATH="$PNPM_HOME:$PATH"
+
+RUN corepack enable
+
+RUN addgroup app && adduser -S -G app app
+
+USER app
+
+WORKDIR /usr/src/app
+
+COPY package.json *.yaml ./
+
+USER root
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+EXPOSE ${APPLICATION_PORT}
+
+CMD ["pnpm", "dev"]
