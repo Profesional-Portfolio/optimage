@@ -22,4 +22,4 @@ COPY . .
 
 EXPOSE ${APPLICATION_PORT}
 
-CMD ["pnpm", "dev"]
+CMD ["pnpm", "start:dev"]

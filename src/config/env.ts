@@ -6,6 +6,7 @@ const envSchema = z.object({
   JWT_PUBLIC_KEY: z.string(),
   JWT_PRIVATE_KEY: z.string(),
   JWT_EXPIRES_IN: z.string(),
+  REFRESH_TOKEN_EXPIRES_IN: z.string(),
   SMTP_HOST: z.string(),
   SMTP_PORT: z.string(),
   SMTP_USER: z.string(),
@@ -16,6 +17,8 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'test', 'production'])
     .default('development'),
+  DB_HOST: z.string(),
+  DB_PORT: z.string(),
   DB_USER: z.string(),
   DB_PASSWORD: z.string(),
   DB_NAME: z.string(),

@@ -13,7 +13,7 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USER} -d ${DB_NAME}']
       interval: 5s
       timeout: 2s
       retries: 20
@@ -29,11 +29,13 @@ services:
       context: .
       dockerfile: dockerfile.dev
     container_name: application
+    env_file:
+      - .env.dev
     ports:
       - '${APPLICATION_PORT}:${APPLICATION_PORT}'
     volumes:
-      - .:/app
-      - /app/node_modules
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
       - db
@@ -42,5 +44,7 @@ services:
 
 networks:
   server-network:
-    driver: bridge
     name: server-network
+
+volumes:
+  postgres_data:
