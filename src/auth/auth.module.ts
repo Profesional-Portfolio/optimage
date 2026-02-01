@@ -13,11 +13,22 @@ import { LogoutUserUseCase } from './application/use-cases/logout-user.use-case'
 import { PasswordHasher } from './domain/interfaces/password-hasher.interface';
 import { TokenProvider } from './domain/interfaces/token-provider.interface';
 import { AuthController } from './presentation/http/auth.controller';
+import { JwtStrategy } from './infraestructure/strategies/jwt.strategy';
+import { env } from '@/config';
+
+const privateKey = Buffer.from(env.JWT_PRIVATE_KEY, 'base64').toString('ascii');
+const publicKey = Buffer.from(env.JWT_PUBLIC_KEY, 'base64').toString('ascii');
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPersistence]),
-    JwtModule.register({}),
+    JwtModule.register({
+      privateKey,
+      publicKey,
+      signOptions: {
+        algorithm: 'RS256',
+      },
+    }),
   ],
   controllers: [AuthController],
   providers: [
@@ -47,9 +58,9 @@ import { AuthController } from './presentation/http/auth.controller';
     },
     {
       provide: RefreshTokenUseCase,
-      inject: [AuthRepository],
-      useFactory: (repository: AuthRepository) =>
-        new RefreshTokenUseCase(repository),
+      inject: [AuthRepository, TokenProvider],
+      useFactory: (repository: AuthRepository, tokenProvider: TokenProvider) =>
+        new RefreshTokenUseCase(repository, tokenProvider),
     },
     {
       provide: LogoutUserUseCase,
@@ -57,6 +68,7 @@ import { AuthController } from './presentation/http/auth.controller';
       useFactory: (repository: AuthRepository) =>
         new LogoutUserUseCase(repository),
     },
+    JwtStrategy,
   ],
   exports: [AuthRepository],
 })

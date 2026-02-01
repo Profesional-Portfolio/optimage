@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { env } from './config';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './shared/infraestructure/interceptors/response.interceptor';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -14,6 +15,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
+  app.use(cookieParser());
   app.enableCors();
   app.useGlobalInterceptors(new ResponseInterceptor(reflector));
   await app.listen(env.APPLICATION_PORT);

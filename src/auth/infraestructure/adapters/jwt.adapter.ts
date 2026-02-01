@@ -19,9 +19,9 @@ export class JwtAdapter implements TokenProvider {
       const token = await this.jwtService.signAsync(payload, {
         privateKey,
         algorithm: 'RS256',
-        secret: privateKey,
         expiresIn: +env.JWT_EXPIRES_IN,
       } satisfies JwtSignOptions);
+      console.log({ token });
       return success(token);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
@@ -33,9 +33,9 @@ export class JwtAdapter implements TokenProvider {
       const token = await this.jwtService.signAsync(payload, {
         privateKey,
         algorithm: 'RS256',
-        secret: privateKey,
         expiresIn: +env.REFRESH_TOKEN_EXPIRES_IN,
       } satisfies JwtSignOptions);
+      console.log({ token });
       return success(token);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
@@ -47,7 +47,6 @@ export class JwtAdapter implements TokenProvider {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         publicKey,
         algorithms: ['RS256'],
-        secret: publicKey,
       } satisfies JwtVerifyOptions);
       return success(payload);
     } catch (error) {

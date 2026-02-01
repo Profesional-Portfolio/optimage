@@ -13,7 +13,6 @@ export class RegisterUserUseCase {
   constructor(private readonly repository: AuthRepository) {}
 
   async execute(dto: RegisterUserDto): Promise<Result<User>> {
-    // Business logic for registration (e.g., check if user exists)
     const [error, existingUser] = await this.repository.findByEmail(dto.email);
     if (error) return failure(error);
     if (existingUser) {
