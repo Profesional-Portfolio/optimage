@@ -21,7 +21,6 @@ export class JwtAdapter implements TokenProvider {
         algorithm: 'RS256',
         expiresIn: +env.JWT_EXPIRES_IN,
       } satisfies JwtSignOptions);
-      console.log({ token });
       return success(token);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
@@ -35,7 +34,6 @@ export class JwtAdapter implements TokenProvider {
         algorithm: 'RS256',
         expiresIn: +env.REFRESH_TOKEN_EXPIRES_IN,
       } satisfies JwtSignOptions);
-      console.log({ token });
       return success(token);
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
