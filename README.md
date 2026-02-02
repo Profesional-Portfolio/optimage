@@ -570,11 +570,3 @@ Key environment variables:
 ## Contributing
 
 [Contribution guidelines]
-
-## Dependencies to install
-
-```bash
-pnpm add class-transformer class-validator bcrypt sharp multer @nestjs/passport @nestjs/jwt passport passport-jwt @nestjs/typeorm typeorm pg
-
-pnpm add -D @types/bcrypt @types/multer @types/passport-jwt @types/multer
-```

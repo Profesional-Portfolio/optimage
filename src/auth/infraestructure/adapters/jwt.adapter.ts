@@ -6,9 +6,7 @@ import type {
   TokenProvider,
 } from '@/auth/domain/interfaces/token-provider.interface';
 import { failure, Result, success } from '@/shared/domain/types/result.type';
-
-const privateKey = Buffer.from(env.JWT_PRIVATE_KEY, 'base64').toString('ascii');
-const publicKey = Buffer.from(env.JWT_PUBLIC_KEY, 'base64').toString('ascii');
+import { jwtConfig } from '@/config';
 
 @Injectable()
 export class JwtAdapter implements TokenProvider {
@@ -17,7 +15,7 @@ export class JwtAdapter implements TokenProvider {
   async generateAccessToken(payload: JwtPayload): Promise<Result<string>> {
     try {
       const token = await this.jwtService.signAsync(payload, {
-        privateKey,
+        privateKey: jwtConfig.privateKey,
         algorithm: 'RS256',
         expiresIn: +env.JWT_EXPIRES_IN,
       } satisfies JwtSignOptions);
@@ -30,7 +28,7 @@ export class JwtAdapter implements TokenProvider {
   async generateRefreshToken(payload: JwtPayload): Promise<Result<string>> {
     try {
       const token = await this.jwtService.signAsync(payload, {
-        privateKey,
+        privateKey: jwtConfig.privateKey,
         algorithm: 'RS256',
         expiresIn: +env.REFRESH_TOKEN_EXPIRES_IN,
       } satisfies JwtSignOptions);
@@ -43,7 +41,7 @@ export class JwtAdapter implements TokenProvider {
   async verifyToken(token: string): Promise<Result<JwtPayload>> {
     try {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
-        publicKey,
+        publicKey: jwtConfig.publicKey,
         algorithms: ['RS256'],
       } satisfies JwtVerifyOptions);
       return success(payload);

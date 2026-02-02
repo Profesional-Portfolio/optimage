@@ -14,17 +14,14 @@ import { PasswordHasher } from './domain/interfaces/password-hasher.interface';
 import { TokenProvider } from './domain/interfaces/token-provider.interface';
 import { AuthController } from './presentation/http/auth.controller';
 import { JwtStrategy } from './infraestructure/strategies/jwt.strategy';
-import { env } from '@/config';
-
-const privateKey = Buffer.from(env.JWT_PRIVATE_KEY, 'base64').toString('ascii');
-const publicKey = Buffer.from(env.JWT_PUBLIC_KEY, 'base64').toString('ascii');
+import { jwtConfig } from '@/config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserPersistence]),
     JwtModule.register({
-      privateKey,
-      publicKey,
+      privateKey: jwtConfig.privateKey,
+      publicKey: jwtConfig.publicKey,
       signOptions: {
         algorithm: 'RS256',
       },

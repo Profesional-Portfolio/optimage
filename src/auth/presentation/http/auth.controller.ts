@@ -23,6 +23,7 @@ import { RefreshTokenUseCase } from '../../application/use-cases/refresh-token.u
 import { PasswordHasher } from '../../domain/interfaces/password-hasher.interface';
 import { TokenProvider } from '../../domain/interfaces/token-provider.interface';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Public } from './decorators/public.decorator';
 
 import { User } from '../../domain/entities/user.entity';
 
@@ -37,6 +38,7 @@ export class AuthController {
     private readonly jwtAdapter: TokenProvider,
   ) {}
 
+  @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() registerDto: RegisterDto) {
@@ -56,6 +58,7 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
