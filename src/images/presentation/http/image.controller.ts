@@ -13,10 +13,12 @@ import {
   ForbiddenException,
   HttpStatus,
   HttpCode,
+  Body,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { UploadImageUseCase } from '../../application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from '../../application/use-cases/get-images-by-user-id.use-case';
 import { DeleteImageUseCase } from '../../application/use-cases/delete-image.use-case';
@@ -25,6 +27,8 @@ import { ImageResponseDto } from './dto/image-response.dto';
 import { StorageProvider } from '../../domain/interfaces/storage.interface';
 import { JwtPayload } from '../../../auth/domain/interfaces/token-provider.interface';
 import { Image } from '../../domain/entities/image.entity';
+import { TransformImageUseCase } from '@/images/application/use-cases/transform-image.use-case';
+import { ImageTransformDto } from './dto/image-transform.dto';
 
 @ApiTags('images')
 @Controller('images')
@@ -33,6 +37,7 @@ export class ImageController {
   constructor(
     private readonly uploadImageUseCase: UploadImageUseCase,
     private readonly getImagesByUserIdUseCase: GetImagesByUserIdUseCase,
+    private readonly transformImageUseCase: TransformImageUseCase,
     private readonly deleteImageUseCase: DeleteImageUseCase,
     private readonly storageProvider: StorageProvider,
   ) {}
@@ -73,6 +78,40 @@ export class ImageController {
     }
 
     return this.mapToResponse(image);
+  }
+
+  @Post('transform/:id')
+  @ApiOperation({ summary: 'Transform an image' })
+  @HttpCode(HttpStatus.OK)
+  async transform(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() options: ImageTransformDto,
+  ) {
+    // return { id, options };
+    const [error, result] = await this.transformImageUseCase.execute(
+      id,
+      (req.user as JwtPayload).id,
+      options,
+    );
+
+    if (error || !result) {
+      throw new BadRequestException(error?.message || 'Image not found');
+    }
+
+    const { buffer: _, image } = result as { buffer: Buffer; image: Image };
+    // const format = options.format || image.format;
+    // const mimeType = `image/${format}`;
+
+    // res.set({
+    //   'Content-Type': mimeType,
+    //   'Content-Length': buffer.length.toString(),
+    //   'Content-Disposition': `attachment; filename="${image.originalFileName}"`,
+    // });
+    // return the actual image stored in the storage provider
+    const url = await this.storageProvider.getPublicUrl(image.storedFileName);
+    res.json({ url });
   }
 
   @Get()
@@ -121,7 +160,6 @@ export class ImageController {
       width: image.width,
       height: image.height,
       format: image.format,
-      url: this.storageProvider.getPublicUrl(image.storedFileName),
       createdAt: image.createdAt,
       updatedAt: image.updatedAt,
     };

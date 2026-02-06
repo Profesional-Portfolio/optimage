@@ -11,6 +11,7 @@ import { UploadImageUseCase } from './application/use-cases/upload-image.use-cas
 import { GetImagesByUserIdUseCase } from './application/use-cases/get-images-by-user-id.use-case';
 import { DeleteImageUseCase } from './application/use-cases/delete-image.use-case';
 import { ImageController } from './presentation/http/image.controller';
+import { TransformImageUseCase } from './application/use-cases/transform-image.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ImagePersistence])],
@@ -44,6 +45,15 @@ import { ImageController } from './presentation/http/image.controller';
         new GetImagesByUserIdUseCase(repository),
     },
     {
+      provide: TransformImageUseCase,
+      inject: [ImageRepository, ImageProcessor, StorageProvider],
+      useFactory: (
+        repository: ImageRepository,
+        processor: ImageProcessor,
+        storage: StorageProvider,
+      ) => new TransformImageUseCase(repository, processor, storage),
+    },
+    {
       provide: DeleteImageUseCase,
       inject: [ImageRepository, StorageProvider],
       useFactory: (repository: ImageRepository, storage: StorageProvider) =>
@@ -53,6 +63,7 @@ import { ImageController } from './presentation/http/image.controller';
   exports: [
     UploadImageUseCase,
     GetImagesByUserIdUseCase,
+    TransformImageUseCase,
     DeleteImageUseCase,
     ImageRepository,
   ],

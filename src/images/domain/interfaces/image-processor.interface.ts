@@ -1,3 +1,5 @@
+import { ImageTransformOptions } from './image-transform-options.interface';
+
 export interface ImageMetadata {
   width: number;
   height: number;
@@ -13,4 +15,8 @@ export abstract class ImageProcessor {
   ): Promise<Buffer>;
   abstract toWebP(buffer: Buffer): Promise<Buffer>;
   abstract getMetadata(buffer: Buffer): Promise<ImageMetadata>;
+  abstract transform(
+    buffer: Buffer,
+    options: ImageTransformOptions,
+  ): Promise<Buffer>;
 }

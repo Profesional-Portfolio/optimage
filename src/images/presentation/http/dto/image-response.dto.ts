@@ -29,9 +29,6 @@ export class ImageResponseDto {
   format: string;
 
   @ApiProperty()
-  url: string;
-
-  @ApiProperty()
   createdAt: Date;
 
   @ApiProperty()

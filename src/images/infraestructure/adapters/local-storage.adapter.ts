@@ -24,11 +24,28 @@ export class LocalStorageAdapter implements StorageProvider {
     fileName: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     mimeType: string,
-  ): Promise<string> {
+  ): Promise<void> {
     await this.ensureDirExists();
     const filePath = path.join(this.uploadDir, fileName);
     await fs.writeFile(filePath, buffer);
-    return fileName; // We return the fileName as the path key
+    // return fileName;
+  }
+
+  async download(fileName: string): Promise<Buffer> {
+    const filePath = await this.getFilePath(fileName);
+    return await fs.readFile(filePath);
+  }
+
+  async generateFilename(originalFilename: string): Promise<string> {
+    const ext = path.extname(originalFilename);
+    const randomString = crypto.randomUUID();
+    return Promise.resolve(`${randomString}${ext}`);
+  }
+
+  async getFilePath(fileName: string): Promise<string> {
+    return new Promise((resolve) => {
+      resolve(path.join(this.uploadDir, fileName));
+    });
   }
 
   async delete(fileName: string): Promise<void> {
@@ -40,8 +57,8 @@ export class LocalStorageAdapter implements StorageProvider {
     }
   }
 
-  getPublicUrl(fileName: string): string {
+  async getPublicUrl(fileName: string): Promise<string> {
     // For local storage, we might want to serve it via a static route
-    return `/uploads/${fileName}`;
+    return Promise.resolve(`/uploads/${fileName}`);
   }
 }
