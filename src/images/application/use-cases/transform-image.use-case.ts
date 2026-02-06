@@ -35,7 +35,7 @@ export class TransformImageUseCase {
     }
 
     if (image.userId !== userId) {
-      return failure(new Error('Unauthorized'));
+      return failure(new Error('Unauthorized to transform this image'));
     }
 
     try {

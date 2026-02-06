@@ -7,10 +7,7 @@ import {
   UploadedFile,
   UseInterceptors,
   UseGuards,
-  Req,
   BadRequestException,
-  NotFoundException,
-  ForbiddenException,
   HttpStatus,
   HttpCode,
   Body,
@@ -22,17 +19,17 @@ import type { Request, Response } from 'express';
 import { UploadImageUseCase } from '../../application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from '../../application/use-cases/get-images-by-user-id.use-case';
 import { DeleteImageUseCase } from '../../application/use-cases/delete-image.use-case';
-import { JwtAuthGuard } from '../../../auth/presentation/http/guards/jwt-auth.guard';
 import { ImageResponseDto } from './dto/image-response.dto';
 import { StorageProvider } from '../../domain/interfaces/storage.interface';
-import { JwtPayload } from '../../../auth/domain/interfaces/token-provider.interface';
+import type { JwtPayload } from '../../../auth/domain/interfaces/token-provider.interface';
 import { Image } from '../../domain/entities/image.entity';
 import { TransformImageUseCase } from '@/images/application/use-cases/transform-image.use-case';
 import { ImageTransformDto } from './dto/image-transform.dto';
+import { IsImageOwnerGuard } from './guards/is-image-owner.guard';
+import { CurrentUser } from '../../../auth/presentation/http/decorators/user.decorator';
 
 @ApiTags('images')
 @Controller('images')
-@UseGuards(JwtAuthGuard)
 export class ImageController {
   constructor(
     private readonly uploadImageUseCase: UploadImageUseCase,
@@ -60,14 +57,14 @@ export class ImageController {
   @HttpCode(HttpStatus.CREATED)
   async upload(
     @UploadedFile() file: Express.Multer.File,
-    @Req() req: Request,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ImageResponseDto> {
     if (!file) {
       throw new BadRequestException('Image file is required');
     }
 
     const [error, image] = await this.uploadImageUseCase.execute({
-      userId: (req.user as JwtPayload).id,
+      userId: user.id,
       buffer: file.buffer,
       originalFileName: file.originalname,
       mimeType: file.mimetype,
@@ -81,23 +78,24 @@ export class ImageController {
   }
 
   @Post('transform/:id')
+  @UseGuards(IsImageOwnerGuard)
   @ApiOperation({ summary: 'Transform an image' })
   @HttpCode(HttpStatus.OK)
   async transform(
     @Param('id') id: string,
-    @Req() req: Request,
+    @CurrentUser() user: JwtPayload,
     @Res() res: Response,
     @Body() options: ImageTransformDto,
   ) {
     // return { id, options };
     const [error, result] = await this.transformImageUseCase.execute(
       id,
-      (req.user as JwtPayload).id,
+      user.id,
       options,
     );
 
     if (error || !result) {
-      throw new BadRequestException(error?.message || 'Image not found');
+      throw new BadRequestException(error?.message || 'Transformation failed');
     }
 
     const { buffer: _, image } = result as { buffer: Buffer; image: Image };
@@ -117,9 +115,11 @@ export class ImageController {
   @Get()
   @ApiOperation({ summary: 'Get all images for the current user' })
   @HttpCode(HttpStatus.OK)
-  async getImages(@Req() req: Request): Promise<ImageResponseDto[]> {
+  async getImages(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ImageResponseDto[]> {
     const [error, images] = await this.getImagesByUserIdUseCase.execute(
-      (req.user as JwtPayload).id,
+      user.id,
     );
 
     if (error) {
@@ -130,21 +130,16 @@ export class ImageController {
   }
 
   @Delete(':id')
+  @UseGuards(IsImageOwnerGuard)
   @ApiOperation({ summary: 'Delete an image' })
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id') id: string, @Req() req: Request): Promise<void> {
-    const [error] = await this.deleteImageUseCase.execute(
-      id,
-      (req.user as JwtPayload).id,
-    );
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<void> {
+    const [error] = await this.deleteImageUseCase.execute(id, user.id);
 
     if (error) {
-      if (error.message === 'Image not found') {
-        throw new NotFoundException(error.message);
-      }
-      if (error.message === 'Unauthorized to delete this image') {
-        throw new ForbiddenException(error.message);
-      }
       throw new BadRequestException(error.message);
     }
   }
