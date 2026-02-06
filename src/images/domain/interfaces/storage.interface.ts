@@ -1,9 +1,12 @@
 export abstract class StorageProvider {
   abstract upload(
     buffer: Buffer,
-    fileName: string,
-    mimeType: string,
-  ): Promise<string>;
+    filename: string,
+    mimetype: string,
+  ): Promise<void>;
+  abstract download(path: string): Promise<Buffer>;
   abstract delete(path: string): Promise<void>;
-  abstract getPublicUrl(path: string): string;
+  abstract generateFilename(fileName: string): Promise<string>;
+  abstract getFilePath(fileName: string): Promise<string>;
+  abstract getPublicUrl(path: string): Promise<string>;
 }

@@ -24,41 +24,41 @@ export class UploadImageUseCase {
   async execute(dto: UploadImageDto): Promise<Result<Image>> {
     try {
       // 1. Get metadata (ensure it's a valid image)
-      await this.imageProcessor.getMetadata(dto.buffer);
+      const metadata = await this.imageProcessor.getMetadata(dto.buffer);
 
-      // 2. Transform to WebP for optimization
-      const webpBuffer = await this.imageProcessor.toWebP(dto.buffer);
-      const webpMetadata = await this.imageProcessor.getMetadata(webpBuffer);
-
-      // 3. Generate unique filename
+      // 2. Generate unique filename
       const fileId = randomUUID();
-      const storedFileName = `${fileId}.webp`;
+      const storedFileName = `${fileId}.${metadata.format}`;
 
-      // 4. Upload to storage
-      const filePath = await this.storageProvider.upload(
-        webpBuffer,
+      // 3. Upload to storage
+      await this.storageProvider.upload(
+        dto.buffer,
         storedFileName,
-        'image/webp',
+        dto.mimeType,
       );
 
-      // 5. Create domain entity
+      const filePath = await this.storageProvider.getFilePath(storedFileName);
+
+      // 4. Create domain entity
       const image = Image.fromObject({
         id: fileId,
         userId: dto.userId,
         originalFileName: dto.originalFileName,
         storedFileName: storedFileName,
         filePath: filePath,
-        mimeType: 'image/webp',
-        size: webpMetadata.size,
-        width: webpMetadata.width,
-        height: webpMetadata.height,
-        format: 'webp',
+        mimeType: dto.mimeType,
+        size: metadata.size,
+        width: metadata.width,
+        height: metadata.height,
+        format: metadata.format,
       });
 
-      // 6. Save to database
+      // 5. Save to database
       const saveResult = await this.imageRepository.save(image);
       return saveResult;
     } catch (error) {
+      const err = error as Error;
+      console.error({ error: err.stack });
       return failure(error instanceof Error ? error : new Error(String(error)));
     }
   }

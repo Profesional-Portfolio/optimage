@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ServeStaticModule } from '@nestjs/serve-static';
 import { AuthModule } from './auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/presentation/http/guards/jwt-auth.guard';
@@ -7,6 +8,7 @@ import { UserPersistence } from './auth/infraestructure/entities/user.persistenc
 import { ImagesModule } from './images/images.module';
 import { ImagePersistence } from './images/infraestructure/entities/image.persistence.entity';
 import { env } from './config';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -21,6 +23,10 @@ import { env } from './config';
       synchronize: true,
     }),
     AuthModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
     ImagesModule,
   ],
   controllers: [],
