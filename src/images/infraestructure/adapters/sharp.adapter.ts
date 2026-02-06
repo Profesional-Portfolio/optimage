@@ -12,14 +12,6 @@ import {
 
 @Injectable()
 export class SharpAdapter implements ImageProcessor {
-  async resize(buffer: Buffer, width: number, height: number): Promise<Buffer> {
-    return sharp(buffer).resize(width, height).toBuffer();
-  }
-
-  async toWebP(buffer: Buffer): Promise<Buffer> {
-    return sharp(buffer).webp().toBuffer();
-  }
-
   async getMetadata(buffer: Buffer): Promise<ImageMetadata> {
     const metadata = await sharp(buffer).metadata();
     return {

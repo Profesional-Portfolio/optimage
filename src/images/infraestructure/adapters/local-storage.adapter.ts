@@ -43,9 +43,7 @@ export class LocalStorageAdapter implements StorageProvider {
   }
 
   async getFilePath(fileName: string): Promise<string> {
-    return new Promise((resolve) => {
-      resolve(path.join(this.uploadDir, fileName));
-    });
+    return Promise.resolve(path.join(this.uploadDir, fileName));
   }
 
   async delete(fileName: string): Promise<void> {
