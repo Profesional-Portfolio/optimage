@@ -9,6 +9,7 @@ import { StorageProvider } from './domain/interfaces/storage.interface';
 import { LocalStorageAdapter } from './infraestructure/adapters/local-storage.adapter';
 import { UploadImageUseCase } from './application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from './application/use-cases/get-images-by-user-id.use-case';
+import { GetImageByIdUseCase } from './application/use-cases/get-image-by-id.use-case';
 import { DeleteImageUseCase } from './application/use-cases/delete-image.use-case';
 import { ImageController } from './presentation/http/image.controller';
 import { TransformImageUseCase } from './application/use-cases/transform-image.use-case';
@@ -45,6 +46,12 @@ import { TransformImageUseCase } from './application/use-cases/transform-image.u
         new GetImagesByUserIdUseCase(repository),
     },
     {
+      provide: GetImageByIdUseCase,
+      inject: [ImageRepository],
+      useFactory: (repository: ImageRepository) =>
+        new GetImageByIdUseCase(repository),
+    },
+    {
       provide: TransformImageUseCase,
       inject: [ImageRepository, ImageProcessor, StorageProvider],
       useFactory: (
@@ -63,6 +70,7 @@ import { TransformImageUseCase } from './application/use-cases/transform-image.u
   exports: [
     UploadImageUseCase,
     GetImagesByUserIdUseCase,
+    GetImageByIdUseCase,
     TransformImageUseCase,
     DeleteImageUseCase,
     ImageRepository,
