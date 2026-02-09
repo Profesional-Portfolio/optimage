@@ -13,6 +13,7 @@ import {
   Body,
   Res,
 } from '@nestjs/common';
+import type { Express } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
@@ -27,6 +28,7 @@ import { TransformImageUseCase } from '@/images/application/use-cases/transform-
 import { ImageTransformDto } from './dto/image-transform.dto';
 import { IsImageOwnerGuard } from './guards/is-image-owner.guard';
 import { CurrentUser } from '../../../auth/presentation/http/decorators/user.decorator';
+import { GetImageByIdUseCase } from '@/images/application/use-cases/get-image-by-id.use-case';
 
 @ApiTags('images')
 @Controller('images')
@@ -37,6 +39,7 @@ export class ImageController {
     private readonly transformImageUseCase: TransformImageUseCase,
     private readonly deleteImageUseCase: DeleteImageUseCase,
     private readonly storageProvider: StorageProvider,
+    private readonly getImageByIdUseCase: GetImageByIdUseCase,
   ) {}
 
   @Post('upload')
@@ -72,6 +75,20 @@ export class ImageController {
 
     if (error) {
       throw new BadRequestException(error.message);
+    }
+
+    return this.mapToResponse(image);
+  }
+
+  @Get(':id')
+  @UseGuards(IsImageOwnerGuard)
+  @ApiOperation({ summary: 'Get an image' })
+  @HttpCode(HttpStatus.OK)
+  async get(@Param('id') id: string): Promise<ImageResponseDto> {
+    const [error, image] = await this.getImageByIdUseCase.execute(id);
+
+    if (error || !image) {
+      throw new BadRequestException(error?.message || 'Image not found');
     }
 
     return this.mapToResponse(image);

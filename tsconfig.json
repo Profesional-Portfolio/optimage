@@ -24,6 +24,7 @@
       "@/*": ["./src/*"],
       "@/auth/*": ["./src/auth/*"],
       "@/shared/*": ["./src/shared/*"]
-    }
+    },
+    "types": ["node", "multer"]
   }
 }
