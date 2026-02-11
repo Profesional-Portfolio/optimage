@@ -6,7 +6,6 @@ export abstract class StorageProvider {
   ): Promise<void>;
   abstract download(path: string): Promise<Buffer>;
   abstract delete(path: string): Promise<void>;
-  abstract generateFilename(fileName: string): Promise<string>;
-  abstract getFilePath(fileName: string): Promise<string>;
+  abstract generateFilename(fileName: string, folder?: string): Promise<string>;
   abstract getPublicUrl(path: string): Promise<string>;
 }

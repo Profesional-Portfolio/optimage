@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { UserPersistence } from './infraestructure/entities/user.persistence.entity';
-import { AuthRepositoryImpl } from './infraestructure/repositories/auth.repository.impl';
+import { TypeOrmAuthRepositoryImpl } from './infraestructure/repositories/typeorm-auth.repository.impl';
 import { AuthRepository } from './domain/repositories/auth.repository';
 import { BcryptAdapter } from './infraestructure/adapters/bcrypt.adapter';
 import { JwtAdapter } from './infraestructure/adapters/jwt.adapter';
@@ -31,7 +31,7 @@ import { jwtConfig } from '@/config';
   providers: [
     {
       provide: AuthRepository,
-      useClass: AuthRepositoryImpl,
+      useClass: TypeOrmAuthRepositoryImpl,
     },
     {
       provide: PasswordHasher,

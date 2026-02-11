@@ -7,7 +7,7 @@ import { User } from '../../domain/entities/user.entity';
 import { failure, Result, success } from '@/shared/domain/types/result.type';
 
 @Injectable()
-export class AuthRepositoryImpl implements AuthRepository {
+export class TypeOrmAuthRepositoryImpl implements AuthRepository {
   constructor(
     @InjectRepository(UserPersistence)
     private readonly repository: Repository<UserPersistence>,
@@ -66,4 +66,12 @@ export class AuthRepositoryImpl implements AuthRepository {
       updatedAt: persistence.updatedAt,
     });
   }
+
+  // private mapToPersistence(domain: User): UserPersistence {
+  //   const persistence = new UserPersistence();
+  //   persistence.email = domain.email;
+  //   persistence.password = domain.password;
+  //   persistence.isActive = domain.isActive;
+  //   return persistence;
+  // }
 }

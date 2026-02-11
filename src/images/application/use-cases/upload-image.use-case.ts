@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import { failure, Result } from '@/shared/domain/types/result.type';
-import { Image } from '../../domain/entities/image.entity';
-import { ImageRepository } from '../../domain/repositories/image.repository';
 import { ImageProcessor } from '../../domain/interfaces/image-processor.interface';
 import { StorageProvider } from '../../domain/interfaces/storage.interface';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
+import { failure, Result, success } from '@/shared/domain/types/result.type';
+import { Image } from '../../domain/entities/image.entity';
+import { ImageRepository } from '../../domain/repositories/image.repository';
 
 export interface UploadImageDto {
   userId: string;
@@ -15,10 +16,12 @@ export interface UploadImageDto {
 
 @Injectable()
 export class UploadImageUseCase {
+  private readonly logger = new Logger(UploadImageUseCase.name);
   constructor(
     private readonly imageRepository: ImageRepository,
     private readonly imageProcessor: ImageProcessor,
     private readonly storageProvider: StorageProvider,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async execute(dto: UploadImageDto): Promise<Result<Image>> {
@@ -27,8 +30,9 @@ export class UploadImageUseCase {
       const metadata = await this.imageProcessor.getMetadata(dto.buffer);
 
       // 2. Generate unique filename
-      const fileId = randomUUID();
-      const storedFileName = `${fileId}.${metadata.format}`;
+      const storedFileName = await this.storageProvider.generateFilename(
+        dto.originalFileName,
+      );
 
       // 3. Upload to storage
       await this.storageProvider.upload(
@@ -37,11 +41,12 @@ export class UploadImageUseCase {
         dto.mimeType,
       );
 
-      const filePath = await this.storageProvider.getFilePath(storedFileName);
+      const filePath = await this.storageProvider.getPublicUrl(storedFileName);
 
-      // 4. Create domain entity
-      const image = Image.fromObject({
-        id: fileId,
+      this.logger.log(`File uploaded successfully: ${filePath}`);
+
+      // 5. Save to database
+      const [error, saved] = await this.imageRepository.save({
         userId: dto.userId,
         originalFileName: dto.originalFileName,
         storedFileName: storedFileName,
@@ -53,9 +58,31 @@ export class UploadImageUseCase {
         format: metadata.format,
       });
 
-      // 5. Save to database
-      const saveResult = await this.imageRepository.save(image);
-      return saveResult;
+      if (error || !saved) return failure(error);
+
+      const image = Image.fromObject({
+        id: saved.id,
+        userId: saved.userId,
+        originalFileName: saved.originalFileName,
+        storedFileName: saved.storedFileName,
+        filePath: saved.filePath,
+        mimeType: saved.mimeType,
+        size: saved.size,
+        width: saved.width,
+        height: saved.height,
+        format: saved.format,
+        createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
+      });
+
+      this.logger.log(`Image saved successfully: ${JSON.stringify(image)}`);
+
+      // 6. Invalidate cache
+      const cacheKey = `user_images:${dto.userId}`;
+      await this.cacheManager.del(cacheKey);
+
+      // 7. Return the created image
+      return success(image);
     } catch (error) {
       const err = error as Error;
       console.error({ error: err.stack });
