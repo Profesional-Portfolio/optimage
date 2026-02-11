@@ -20,6 +20,9 @@ export class ImageResponseDto {
   size: number;
 
   @ApiProperty()
+  filePath: string;
+
+  @ApiProperty()
   width: number;
 
   @ApiProperty()

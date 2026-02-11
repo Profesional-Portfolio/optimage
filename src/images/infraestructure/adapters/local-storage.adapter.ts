@@ -32,19 +32,22 @@ export class LocalStorageAdapter implements StorageProvider {
   }
 
   async download(fileName: string): Promise<Buffer> {
-    const filePath = await this.getFilePath(fileName);
+    const filePath = await this.getPublicUrl(fileName);
     return await fs.readFile(filePath);
   }
 
-  async generateFilename(originalFilename: string): Promise<string> {
+  async generateFilename(
+    originalFilename: string,
+    folder = 'images',
+  ): Promise<string> {
     const ext = path.extname(originalFilename);
     const randomString = crypto.randomUUID();
-    return Promise.resolve(`${randomString}${ext}`);
+    return Promise.resolve(`${folder}/${randomString}${ext}`);
   }
 
-  async getFilePath(fileName: string): Promise<string> {
-    return Promise.resolve(path.join(this.uploadDir, fileName));
-  }
+  // async getFilePath(fileName: string): Promise<string> {
+  //   return Promise.resolve(path.join(this.uploadDir, fileName));
+  // }
 
   async delete(fileName: string): Promise<void> {
     const filePath = path.join(this.uploadDir, fileName);

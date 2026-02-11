@@ -7,16 +7,26 @@ import { Image } from '../../domain/entities/image.entity';
 import { failure, Result, success } from '@/shared/domain/types/result.type';
 
 @Injectable()
-export class TypeOrmImageRepository implements ImageRepository {
+export class TypeOrmImageRepositoryImpl implements ImageRepository {
   constructor(
     @InjectRepository(ImagePersistence)
     private readonly repository: Repository<ImagePersistence>,
   ) {}
 
-  async save(image: Image): Promise<Result<Image>> {
+  async save(image: Partial<Image>): Promise<Result<Image>> {
     try {
-      const persistence = this.mapToPersistence(image);
-      const saved = await this.repository.save(persistence);
+      const saved = this.repository.create({
+        userId: image.userId,
+        originalFileName: image.originalFileName,
+        storedFileName: image.storedFileName,
+        filePath: image.filePath,
+        mimeType: image.mimeType,
+        size: image.size,
+        width: image.width,
+        height: image.height,
+        format: image.format,
+      });
+      await this.repository.save(saved);
       return success(this.mapToDomain(saved));
     } catch (error) {
       return failure(error instanceof Error ? error : new Error(String(error)));
@@ -68,18 +78,17 @@ export class TypeOrmImageRepository implements ImageRepository {
     });
   }
 
-  private mapToPersistence(domain: Image): ImagePersistence {
-    const persistence = new ImagePersistence();
-    persistence.id = domain.id;
-    persistence.userId = domain.userId;
-    persistence.originalFileName = domain.originalFileName;
-    persistence.storedFileName = domain.storedFileName;
-    persistence.filePath = domain.filePath;
-    persistence.mimeType = domain.mimeType;
-    persistence.size = domain.size;
-    persistence.width = domain.width;
-    persistence.height = domain.height;
-    persistence.format = domain.format;
-    return persistence;
-  }
+  // private mapToPersistence(domain: Image): ImagePersistence {
+  //   const persistence = new ImagePersistence();
+  //   persistence.userId = domain.userId;
+  //   persistence.originalFileName = domain.originalFileName;
+  //   persistence.storedFileName = domain.storedFileName;
+  //   persistence.filePath = domain.filePath;
+  //   persistence.mimeType = domain.mimeType;
+  //   persistence.size = domain.size;
+  //   persistence.width = domain.width;
+  //   persistence.height = domain.height;
+  //   persistence.format = domain.format;
+  //   return persistence;
+  // }
 }

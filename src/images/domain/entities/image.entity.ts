@@ -1,34 +1,36 @@
-export class Image {
-  constructor(
-    public readonly id: string,
-    public readonly userId: string,
-    public readonly originalFileName: string,
-    public readonly storedFileName: string,
-    public readonly filePath: string,
-    public readonly mimeType: string,
-    public readonly size: number,
-    public readonly width: number,
-    public readonly height: number,
-    public readonly format: string,
-    public readonly createdAt: Date = new Date(),
-    public readonly updatedAt: Date = new Date(),
-  ) {}
+export interface ImageProps {
+  id: string;
+  userId: string;
+  originalFileName: string;
+  storedFileName: string;
+  filePath: string;
+  mimeType: string;
+  size: number;
+  width: number;
+  height: number;
+  format: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  [key: string]: any;
+}
 
-  static fromObject(object: {
-    id: string;
-    userId: string;
-    originalFileName: string;
-    storedFileName: string;
-    filePath: string;
-    mimeType: string;
-    size: number;
-    width: number;
-    height: number;
-    format: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-    [key: string]: any;
-  }): Image {
+export class Image {
+  public id: string = '';
+  public userId: string = '';
+  public originalFileName: string = '';
+  public storedFileName: string = '';
+  public filePath: string = '';
+  public mimeType: string = '';
+  public size: number = 0;
+  public width: number = 0;
+  public height: number = 0;
+  public format: string = '';
+  public createdAt: Date = new Date();
+  public updatedAt: Date = new Date();
+
+  constructor() {}
+
+  static fromObject(object: ImageProps): Image {
     const {
       id,
       userId,
@@ -56,7 +58,7 @@ export class Image {
     if (!height) throw new Error('Image height is required');
     if (!format) throw new Error('Image format is required');
 
-    return new Image(
+    const props: ImageProps = {
       id,
       userId,
       originalFileName,
@@ -67,8 +69,12 @@ export class Image {
       width,
       height,
       format,
-      createdAt ?? new Date(),
-      updatedAt ?? new Date(),
-    );
+      createdAt: createdAt ? new Date(createdAt) : new Date(),
+      updatedAt: updatedAt ? new Date(updatedAt) : new Date(),
+    };
+
+    const image = new Image();
+    Object.assign(image, props);
+    return image;
   }
 }

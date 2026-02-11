@@ -11,12 +11,11 @@ import {
   HttpStatus,
   HttpCode,
   Body,
-  Res,
 } from '@nestjs/common';
 import type { Express } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
-import type { Request, Response } from 'express';
+import type { Request } from 'express';
 import { UploadImageUseCase } from '../../application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from '../../application/use-cases/get-images-by-user-id.use-case';
 import { DeleteImageUseCase } from '../../application/use-cases/delete-image.use-case';
@@ -101,7 +100,6 @@ export class ImageController {
   async transform(
     @Param('id') id: string,
     @CurrentUser() user: JwtPayload,
-    @Res() res: Response,
     @Body() options: ImageTransformDto,
   ) {
     // return { id, options };
@@ -115,18 +113,7 @@ export class ImageController {
       throw new BadRequestException(error?.message || 'Transformation failed');
     }
 
-    const { buffer: _, image } = result as { buffer: Buffer; image: Image };
-    // const format = options.format || image.format;
-    // const mimeType = `image/${format}`;
-
-    // res.set({
-    //   'Content-Type': mimeType,
-    //   'Content-Length': buffer.length.toString(),
-    //   'Content-Disposition': `attachment; filename="${image.originalFileName}"`,
-    // });
-    // return the actual image stored in the storage provider
-    const url = await this.storageProvider.getPublicUrl(image.storedFileName);
-    res.json({ url });
+    return { jobId: result.jobId };
   }
 
   @Get()
@@ -162,18 +149,33 @@ export class ImageController {
   }
 
   private mapToResponse(image: Image): ImageResponseDto {
+    const {
+      id,
+      userId,
+      originalFileName,
+      storedFileName,
+      filePath,
+      mimeType,
+      size,
+      width,
+      height,
+      format,
+      createdAt,
+      updatedAt,
+    } = image;
     return {
-      id: image.id,
-      userId: image.userId,
-      originalFileName: image.originalFileName,
-      storedFileName: image.storedFileName,
-      mimeType: image.mimeType,
-      size: image.size,
-      width: image.width,
-      height: image.height,
-      format: image.format,
-      createdAt: image.createdAt,
-      updatedAt: image.updatedAt,
+      id,
+      userId,
+      originalFileName,
+      storedFileName,
+      filePath,
+      mimeType,
+      size,
+      width,
+      height,
+      format,
+      createdAt,
+      updatedAt,
     };
   }
 }

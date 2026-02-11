@@ -1,89 +1,56 @@
 import { User } from '@/auth/domain/entities/user.entity';
 import { Image } from '@/images/domain/entities/image.entity';
-import { ImageProcessor } from '@/images/domain/interfaces/image-processor.interface';
 import { ImageTransformOptions } from '@/images/domain/interfaces/image-transform-options.interface';
-import { StorageProvider } from '@/images/domain/interfaces/storage.interface';
 import { ImageRepository } from '@/images/domain/repositories/image.repository';
 import { failure, Result, success } from '@/shared/domain/types/result.type';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+
+import { InjectQueue } from '@nestjs/bull';
+import type { Queue } from 'bull';
+import {
+  IMAGE_JOBS,
+  IMAGE_PROCESSING_QUEUE,
+} from '../../domain/constants/queue-names.constants';
 
 @Injectable()
 export class TransformImageUseCase {
+  private readonly logger = new Logger(TransformImageUseCase.name);
   constructor(
     private readonly imageRepository: ImageRepository,
-    private readonly imageProcessor: ImageProcessor,
-    private readonly storageProvider: StorageProvider,
+    @InjectQueue(IMAGE_PROCESSING_QUEUE) private readonly imageQueue: Queue,
   ) {}
 
   async execute(
     imageId: Image['id'],
     userId: User['id'],
     options: ImageTransformOptions,
-  ): Promise<Result<{ buffer: Buffer; image: Image }>> {
-    // 1. Get image from database
-    // 2. Check if user is authorized
-    // 3. Get image from storage
-    // 4. Transform image
-    // 5. Save image to database
-    // 6. Save image to storage
-    // 7. Return image
-
-    const [errorImage, image] = await this.imageRepository.findById(imageId);
-
-    if (!image) {
-      return failure(new Error(errorImage?.message || 'Image not found'));
-    }
-
-    if (image.userId !== userId) {
-      return failure(new Error('Unauthorized to transform this image'));
-    }
+  ): Promise<Result<{ jobId: string }>> {
+    this.logger.log(`Starting transformation for image ${imageId}`);
 
     try {
-      // 1. Download image from storage
-      const originalBuffer = await this.storageProvider.download(
-        image.storedFileName,
-      );
+      this.logger.log(`Finding image ${imageId} in repository...`);
+      const [errorImage, image] = await this.imageRepository.findById(imageId);
+      this.logger.log(`Repository returned: ${image ? 'found' : 'not found'}`);
 
-      // 2. Transform image
-      const transformedBuffer = await this.imageProcessor.transform(
-        originalBuffer,
+      if (!image) {
+        return failure(new Error(errorImage?.message || 'Image not found'));
+      }
+
+      if (image.userId !== userId) {
+        return failure(new Error('Unauthorized to transform this image'));
+      }
+
+      this.logger.log(`Adding job to queue ${IMAGE_PROCESSING_QUEUE}...`);
+      const job = await this.imageQueue.add(IMAGE_JOBS.TRANSFORM, {
+        imageId,
+        userId,
         options,
-      );
-
-      // 3. Generate new filename for transformed image
-      const transformedId = crypto.randomUUID();
-      const extension = options.format || image.format;
-      const transformedFileName = `${transformedId}.${extension}`;
-
-      // 4. Upload transformed image
-      await this.storageProvider.upload(
-        transformedBuffer,
-        transformedFileName,
-        `image/${extension}`,
-      );
-
-      const filePath =
-        await this.storageProvider.getFilePath(transformedFileName);
-
-      // 5. Create new image entity (derivative)
-      const metadata = await this.imageProcessor.getMetadata(transformedBuffer);
-      const transformedImage = Image.fromObject({
-        id: transformedId,
-        userId: userId,
-        originalFileName: `transformed-${image.originalFileName}`,
-        storedFileName: transformedFileName,
-        filePath: filePath,
-        mimeType: `image/${extension}`,
-        size: metadata.size,
-        width: metadata.width,
-        height: metadata.height,
-        format: metadata.format,
       });
+      this.logger.log(`Job added successfully with ID ${job.id}`);
 
-      // 6. Save update/new image to database
-      await this.imageRepository.save(transformedImage);
-      return success({ buffer: transformedBuffer, image: transformedImage });
+      return success({ jobId: job.id.toString() });
     } catch (error) {
+      this.logger.error(`Error in TransformImageUseCase: ${error}`);
       return failure(error instanceof Error ? error : new Error(String(error)));
     }
   }
