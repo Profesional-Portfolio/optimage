@@ -18,7 +18,4 @@ export class BaseResponseDto<T> {
 
   @ApiProperty({ type: 'string', example: new Date().toISOString() })
   timestamp: Date;
-
-  @ApiProperty({ type: 'string', example: 'trace-id-1234567890' })
-  traceId: string;
 }

@@ -31,8 +31,12 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_REGION: z.string(),
   AWS_S3_BUCKET: z.string(),
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string(),
+  CLOUDINARY_API_KEY: z.string(),
+  CLOUDINARY_API_SECRET: z.string(),
   // Sotrage mode
-  STORAGE_MODE: z.enum(['local', 's3']).default('local'),
+  STORAGE_MODE: z.enum(['local', 's3', 'cloudinary']).default('local'),
   // Redis
   REDIS_HOST: z.string(),
   REDIS_PORT: z.coerce.number(),

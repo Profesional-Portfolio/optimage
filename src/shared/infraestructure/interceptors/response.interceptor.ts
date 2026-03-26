@@ -35,7 +35,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     };
 
     const statusCode = errorObj.status || response.statusCode || 500;
-    const traceId = (request.headers['x-trace-id'] as string) || '';
     const message =
       this.reflector.get<string>(RESPONSE_MESSAGE_KEY, context.getHandler()) ||
       errorObj.message ||
@@ -51,7 +50,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<
       statusCode,
       path,
       timestamp,
-      traceId,
     };
   }
 
@@ -61,7 +59,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     const request = ctx.getRequest<Request>();
 
     const statusCode = response.statusCode;
-    const traceId = (request.headers['x-trace-id'] as string) || '';
     const message =
       this.reflector.get<string>(RESPONSE_MESSAGE_KEY, context.getHandler()) ||
       'Operation successful';
@@ -75,7 +72,6 @@ export class ResponseInterceptor<T> implements NestInterceptor<
       statusCode,
       path,
       timestamp,
-      traceId,
     };
   }
 }

@@ -21,6 +21,7 @@ export class JwtAdapter implements TokenProvider {
       } satisfies JwtSignOptions);
       return success(token);
     } catch (error) {
+      console.log(error);
       return failure(error instanceof Error ? error : new Error(String(error)));
     }
   }
@@ -34,6 +35,7 @@ export class JwtAdapter implements TokenProvider {
       } satisfies JwtSignOptions);
       return success(token);
     } catch (error) {
+      console.log(error);
       return failure(error instanceof Error ? error : new Error(String(error)));
     }
   }

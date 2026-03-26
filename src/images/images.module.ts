@@ -6,7 +6,9 @@ import { TypeOrmImageRepositoryImpl } from './infraestructure/repositories/typeo
 import { ImageProcessor } from './domain/interfaces/image-processor.interface';
 import { SharpAdapter } from './infraestructure/adapters/sharp.adapter';
 import { StorageProvider } from './domain/interfaces/storage.interface';
-// import { LocalStorageAdapter } from './infraestructure/adapters/local-storage.adapter';
+import { LocalStorageAdapter } from './infraestructure/adapters/local-storage.adapter';
+import { CloudinaryStorageAdapter } from './infraestructure/adapters/cloudinary-storage.adapter';
+import { env } from '@/config/env';
 import { UploadImageUseCase } from './application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from './application/use-cases/get-images-by-user-id.use-case';
 import { GetImageByIdUseCase } from './application/use-cases/get-image-by-id.use-case';
@@ -41,7 +43,14 @@ import { IMAGE_PROCESSING_QUEUE } from './domain/constants/queue-names.constants
     },
     {
       provide: StorageProvider,
-      useClass: S3StorageAdapter,
+      useFactory: () => {
+        if (env.STORAGE_MODE === 'cloudinary') {
+          return new CloudinaryStorageAdapter();
+        } else if (env.STORAGE_MODE === 's3') {
+          return new S3StorageAdapter();
+        }
+        return new LocalStorageAdapter();
+      },
     },
     {
       provide: UploadImageUseCase,
