@@ -23,7 +23,8 @@ import * as redisStore from 'cache-manager-redis-store';
       password: env.DB_PASSWORD,
       database: env.DB_NAME,
       entities: [UserPersistence, ImagePersistence],
-      synchronize: true,
+      synchronize: env.NODE_ENV === 'development',
+      logging: env.NODE_ENV === 'development',
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
