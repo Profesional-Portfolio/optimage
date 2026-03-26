@@ -12,6 +12,7 @@ import { join } from 'path';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bull';
 import * as redisStore from 'cache-manager-redis-store';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -49,7 +50,7 @@ import * as redisStore from 'cache-manager-redis-store';
     AuthModule,
     ImagesModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [
     {
       provide: APP_GUARD,

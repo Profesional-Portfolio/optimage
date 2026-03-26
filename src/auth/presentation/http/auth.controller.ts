@@ -24,9 +24,15 @@ import { PasswordHasher } from '../../domain/interfaces/password-hasher.interfac
 import { TokenProvider } from '../../domain/interfaces/token-provider.interface';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
-
 import { User } from '../../domain/entities/user.entity';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -41,6 +47,10 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a new user' })
+  @ApiResponse({ status: 201, description: 'User successfully created.' })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
+  @ApiResponse({ status: 409, description: 'User already exists.' })
   async register(@Body() registerDto: RegisterDto) {
     const hashed = await this.bcryptAdapter.hash(registerDto.password);
     const [error, user] = await this.registerUseCase.execute({
@@ -61,6 +71,15 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Log in a user' })
+  @ApiResponse({
+    status: 200,
+    description: 'Logged in successfully, cookies set.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized or invalid credentials.',
+  })
   async login(
     @Body() loginDto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -88,6 +107,8 @@ export class AuthController {
 
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Log out user and clear cookies' })
+  @ApiResponse({ status: 204, description: 'Successfully logged out.' })
   logout(@Res({ passthrough: true }) res: Response) {
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
@@ -96,6 +117,12 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Refresh access token using refresh_token cookie' })
+  @ApiResponse({ status: 200, description: 'Tokens refreshed successfully.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Refresh token not found or invalid.',
+  })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
@@ -122,6 +149,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   @HttpCode(HttpStatus.OK)
+  @ApiCookieAuth('access_token')
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, description: 'Returns the user profile.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   getProfile(@Req() req: Request) {
     return req.user;
   }

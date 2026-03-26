@@ -14,7 +14,14 @@ import {
 } from '@nestjs/common';
 import type { Express } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiConsumes,
+  ApiBody,
+  ApiResponse,
+  ApiCookieAuth,
+} from '@nestjs/swagger';
 import type { Request } from 'express';
 import { UploadImageUseCase } from '../../application/use-cases/upload-image.use-case';
 import { GetImagesByUserIdUseCase } from '../../application/use-cases/get-images-by-user-id.use-case';
@@ -30,6 +37,7 @@ import { CurrentUser } from '../../../auth/presentation/http/decorators/user.dec
 import { GetImageByIdUseCase } from '@/images/application/use-cases/get-image-by-id.use-case';
 
 @ApiTags('images')
+@ApiCookieAuth('access_token')
 @Controller('images')
 export class ImageController {
   constructor(
@@ -56,6 +64,13 @@ export class ImageController {
     },
   })
   @ApiOperation({ summary: 'Upload an image' })
+  @ApiResponse({
+    status: 201,
+    description: 'Image successfully uploaded.',
+    type: ImageResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request. Invalid file.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @HttpCode(HttpStatus.CREATED)
   async upload(
     @UploadedFile() file: Express.Multer.File,
@@ -81,7 +96,18 @@ export class ImageController {
 
   @Get(':id')
   @UseGuards(IsImageOwnerGuard)
-  @ApiOperation({ summary: 'Get an image' })
+  @ApiOperation({ summary: 'Get an image metadata by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the specified image metadata.',
+    type: ImageResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Bad Request. Image not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. User does not own the image.',
+  })
   @HttpCode(HttpStatus.OK)
   async get(@Param('id') id: string): Promise<ImageResponseDto> {
     const [error, image] = await this.getImageByIdUseCase.execute(id);
@@ -95,7 +121,17 @@ export class ImageController {
 
   @Post('transform/:id')
   @UseGuards(IsImageOwnerGuard)
-  @ApiOperation({ summary: 'Transform an image' })
+  @ApiOperation({ summary: 'Transform an image (resize, crop, filter, etc.)' })
+  @ApiResponse({ status: 200, description: 'Transformation job queued.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Bad Request. Transformation failed.',
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. User does not own the image.',
+  })
   @HttpCode(HttpStatus.OK)
   async transform(
     @Param('id') id: string,
@@ -117,7 +153,15 @@ export class ImageController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all images for the current user' })
+  @ApiOperation({
+    summary: 'Get all images for the current authenticated user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns an array of image metadata.',
+    type: [ImageResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @HttpCode(HttpStatus.OK)
   async getImages(
     @CurrentUser() user: JwtPayload,
@@ -135,7 +179,14 @@ export class ImageController {
 
   @Delete(':id')
   @UseGuards(IsImageOwnerGuard)
-  @ApiOperation({ summary: 'Delete an image' })
+  @ApiOperation({ summary: 'Delete an image by ID' })
+  @ApiResponse({ status: 204, description: 'Image successfully deleted.' })
+  @ApiResponse({ status: 400, description: 'Bad Request. Image not found.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden. User does not own the image.',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(
     @Param('id') id: string,
