@@ -26,6 +26,8 @@ import { AppController } from './app.controller';
       entities: [UserPersistence, ImagePersistence],
       synchronize: env.NODE_ENV === 'development',
       logging: env.NODE_ENV === 'development',
+      ssl:
+        env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
     }),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
