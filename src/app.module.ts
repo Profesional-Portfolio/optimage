@@ -37,6 +37,7 @@ import { AppController } from './app.controller';
       store: redisStore,
       host: env.REDIS_HOST,
       port: env.REDIS_PORT,
+      ...(env.REDIS_PASSWORD && { auth_pass: env.REDIS_PASSWORD }),
       isGlobal: true,
       ttl: 600, // 10 minutes
       ...(env.NODE_ENV === 'production' && { tls: {} }),
@@ -45,6 +46,7 @@ import { AppController } from './app.controller';
       redis: {
         host: env.REDIS_HOST,
         port: env.REDIS_PORT,
+        ...(env.REDIS_PASSWORD && { password: env.REDIS_PASSWORD }),
         maxRetriesPerRequest: null,
         ...(env.NODE_ENV === 'production' && { tls: {} }),
       },
