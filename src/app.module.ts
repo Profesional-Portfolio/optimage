@@ -36,12 +36,14 @@ import * as redisStore from 'cache-manager-redis-store';
       port: env.REDIS_PORT,
       isGlobal: true,
       ttl: 600, // 10 minutes
+      ...(env.NODE_ENV === 'production' && { tls: {} }),
     }),
     BullModule.forRoot({
       redis: {
         host: env.REDIS_HOST,
         port: env.REDIS_PORT,
         maxRetriesPerRequest: null,
+        ...(env.NODE_ENV === 'production' && { tls: {} }),
       },
     }),
     AuthModule,
